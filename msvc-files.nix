@@ -16,8 +16,8 @@ let
     inherit hash;
   };
 in
-stdenvNoCC.mkDerivation (final: {
-  pname = "msvc-sdk";
+stdenvNoCC.mkDerivation (_final: {
+  pname = "msvc-files";
   version = "10.0.16299.0";
   outputs = [ "out" "license" ];
 
@@ -65,9 +65,11 @@ stdenvNoCC.mkDerivation (final: {
   installPhase = ''
     runHook preInstall
 
-    extracted="$PWD/extracted/sdk"
+    extracted="$PWD/extracted"
+    sdk="$extracted/sdk"
+    tools="$extracted/tools"
     dl="$PWD/dl"
-    mkdir -p "$extracted" "$dl" "$license"
+    mkdir -p "$sdk" "$tools" "$dl" "$license"
 
     for _src in $srcs; do
       if [[ "$_src" == *.exe ]]; then
@@ -87,19 +89,27 @@ stdenvNoCC.mkDerivation (final: {
     done
 
     for _src in $srcs; do
-      if [[ "$_src" == *.vsix ]]; then
-        unzip "$_src" 'Contents/*' -d "$extracted"
-        cp -Ra "$extracted/Contents/." "$extracted"
-        rm -rf "$extracted/Contents"
+      if [[ "$_src" == *.tools.*.vsix ]]; then
+        unzip "$_src" 'Contents/*' -d "$tools"
       fi
     done
+    cp -Ra "$tools/Contents/." "$tools"
+    rm -rf "$tools/Contents"
+
+    for _src in $srcs; do
+      if [[ "$_src" == *.crt.*.vsix ]]; then
+        unzip "$_src" 'Contents/*' -d "$sdk"
+      fi
+    done
+    cp -Ra "$sdk/Contents/." "$sdk"
+    rm -rf "$sdk/Contents"
 
     for _src in $srcs; do
       if [[ "$_src" == *.msi ]]; then
         cp "$_src" "$dl/$(stripHash "$_src")"
-        msiextract --directory "$extracted/" "$dl/$(stripHash "$_src")"
-        cp -RT "$extracted"/Program\ Files/* "$extracted"
-        rm -rf "$extracted"/Program\ Files
+        msiextract --directory "$sdk/" "$dl/$(stripHash "$_src")"
+        cp -RT "$sdk"/Program\ Files/* "$sdk"
+        rm -rf "$sdk"/Program\ Files
       fi
     done
 

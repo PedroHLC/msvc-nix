@@ -1,1 +1,3 @@
-build-msvc.nix
+/result
+/result-license
+/build-msvc.nix
