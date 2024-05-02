@@ -2,14 +2,12 @@
 , stdenvNoCC
 , makeWrapper
 , wineWowPackages
-, wine ? wineWowPackages.stable
+, msvcWine ? wineWowPackages.stable
 , msvc
+, msvcHost ? if stdenvNoCC.is32bit then "x86" else "x64"
 }:
 
 # NOTE: Directly port of https://github.com/est31/msvc-wine-rust/blob/master/linker-scripts/linker.sh
-let
-  host = "x64";
-in
 stdenvNoCC.mkDerivation (final: {
   pname = "msvc-wine";
   inherit (msvc) version passthru meta;
@@ -38,10 +36,10 @@ stdenvNoCC.mkDerivation (final: {
       for exe in bscmake cl cvtres dumpbin editbin ifc lib link ml mspdbcmf mspdbsrv nmake undname xdcmake; do
         echo "''${target[1]}-msvc-$exe"
         makeWrapper $src "$out/bin/''${target[1]}-msvc-$exe" \
-          --set msvc_host ${host} \
+          --set msvc_host ${msvcHost} \
           --set msvc_exe "$exe" \
           --set msvc_target "''${target[0]}" \
-          --set msvc_wine_exec '${wine}/bin/wine' \
+          --set msvc_wine_exec '${msvcWine}/bin/wine' \
           --set msvc_tools_version '${final.passthru.toolsVersion}' \
           --set msvc_sdk_version '${final.version}' \
           --set msvc_extracted_dir '${msvc}'

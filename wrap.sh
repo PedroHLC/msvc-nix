@@ -1,10 +1,20 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-_target_exec=$msvc_extracted_dir/tools/VC/Tools/MSVC/$msvc_tools_version/bin/Host$msvc_host/$msvc_target/$msvc_exe.exe
-_sdk_libs=$msvc_extracted_dir/sdk/10/Lib/$msvc_sdk_version/um/$msvc_target/
-_ucrt_libs=$msvc_extracted_dir/sdk/10/Lib/$msvc_sdk_version/ucrt/$msvc_target/
-_crt_libs=$msvc_extracted_dir/sdk/VC/Tools/MSVC/$msvc_tools_version/lib/$msvc_target/
+msvc_base=${msvc_base:-/tmp/msvc}
+export WINEPREFIX=$msvc_base/pfx
+_msvc_base=$WINEPREFIX/drive_c/MSVC
+
+if [ ! -d "$msvc_base" ]; then
+  mkdir "$msvc_base"
+  $msvc_wine_exec wineboot -i
+  cp --no-preserve=mode -r $msvc_extracted_dir $_msvc_base
+fi
+
+_target_exec=$_msvc_base/tools/VC/Tools/MSVC/$msvc_tools_version/bin/Host$msvc_host/$msvc_target/$msvc_exe.exe
+_sdk_libs=$_msvc_base/sdk/10/Lib/$msvc_sdk_version/um/$msvc_target/
+_ucrt_libs=$_msvc_base/sdk/10/Lib/$msvc_sdk_version/ucrt/$msvc_target/
+_crt_libs=$_msvc_base/sdk/VC/Tools/MSVC/$msvc_tools_version/lib/$msvc_target/
 
 function make_wine_path() {
     v=`realpath "$1"`
@@ -23,4 +33,5 @@ for v in $@; do
     _args="$_args $v"
 done
 
+echo exec $msvc_wine_exec $_target_exec $_args
 exec $msvc_wine_exec $_target_exec $_args
